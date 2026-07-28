@@ -92,6 +92,23 @@ void SDL3_Initialize() {
     }
 
     LOG("SDL3 Initialized.");
+
+    if (enableDev) {
+        int joyCount = 0;
+        SDL_JoystickID* joysticks = SDL_GetJoysticks(&joyCount);
+        if (joysticks) {
+            LOG("Found %d joysticks connected", joyCount);
+            for (int i = 0; i < joyCount; ++i) {
+                SDL_JoystickID id = joysticks[i];
+                const char* name = SDL_GetJoystickNameForID(id);
+                SDL_GUID guid = SDL_GetJoystickGUIDForID(id);
+                char guidStr[64];
+                SDL_GUIDToString(guid, guidStr, sizeof(guidStr));
+                LOG("Joystick ID %d: Name: '%s', GUID: '%s'", (int)id, name ? name : "Unknown", guidStr);
+            }
+            SDL_free(joysticks);
+        }
+    }
 }
 
 void SDL3_Cleanup() {
@@ -235,6 +252,13 @@ bool SDL3_GetState(CustomControllerState& outState) {
             }
         }
 
+        if (!g_Gamepad) {
+            // Attempt to connect immediately if this is the very first connection attempt
+            if (g_JoySerialNum.empty() && g_JoyHardwarePath.empty()) {
+                AttemptInitialConnect();
+            }
+        }
+        
         if (!g_Gamepad) return false;
     }
 
