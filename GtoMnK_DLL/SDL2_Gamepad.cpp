@@ -104,7 +104,11 @@ void SDL2_Initialize() {
         int joyCount = SDL_NumJoysticks();
         LOG("Found %d joysticks connected", joyCount);
         for (int i = 0; i < joyCount; ++i) {
-            const char* name = SDL_JoystickNameForIndex(i);
+            const char* name = nullptr;
+            if (SDL_IsGameController(i)) {
+                name = SDL_GameControllerNameForIndex(i);
+            }
+            if (!name) name = SDL_JoystickNameForIndex(i);
             SDL_JoystickGUID guid = SDL_JoystickGetDeviceGUID(i);
             char guidStr[64];
             SDL_JoystickGetGUIDString(guid, guidStr, sizeof(guidStr));

@@ -100,7 +100,11 @@ void SDL3_Initialize() {
             LOG("Found %d joysticks connected", joyCount);
             for (int i = 0; i < joyCount; ++i) {
                 SDL_JoystickID id = joysticks[i];
-                const char* name = SDL_GetJoystickNameForID(id);
+                const char* name = nullptr;
+                if (SDL_IsGamepad(id)) {
+                    name = SDL_GetGamepadNameForID(id);
+                }
+                if (!name) name = SDL_GetJoystickNameForID(id);
                 SDL_GUID guid = SDL_GetJoystickGUIDForID(id);
                 char guidStr[64];
                 SDL_GUIDToString(guid, guidStr, sizeof(guidStr));
