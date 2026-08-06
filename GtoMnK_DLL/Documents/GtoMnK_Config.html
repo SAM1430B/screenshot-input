@@ -812,6 +812,45 @@
             return c;
         }
 
+        function parseDisplayString(val) {
+            if (val === "0") return "None";
+            if (val === "Fn1" || val === "Fn2") return val;
+
+            let isReleaseHold = val.includes('^') || val.includes('*');
+
+            if (isReleaseHold) {
+                let relStr = "", holdStr = "";
+                let holdIndex = val.indexOf('+*');
+                if (holdIndex !== -1) {
+                    relStr = val.substring(0, holdIndex);
+                    holdStr = val.substring(holdIndex + 1);
+                } else if (val.startsWith('*')) {
+                    holdStr = val;
+                } else {
+                    relStr = val;
+                }
+
+                let parseGroup = (str) => {
+                    if (!str) return "";
+                    let clean = str.replace(/^[\^\*]/, '');
+                    if (clean.startsWith('(') && clean.endsWith(')')) {
+                        clean = clean.substring(1, clean.length - 1);
+                    }
+                    return clean.split('+').map(k => getLabel(k.trim())).join('+');
+                };
+
+                let relDisp = relStr ? parseGroup(relStr) : "";
+                let holdDisp = holdStr ? parseGroup(holdStr) : "";
+
+                if (relDisp && holdDisp) return `${relDisp} / ${holdDisp}`;
+                if (relDisp) return relDisp;
+                if (holdDisp) return holdDisp;
+                return val;
+            } else {
+                return val.split('+').map(k => getLabel(k.trim())).join('+');
+            }
+        }
+
         const keyMap = {
             "Escape": 1, "Enter": 2, "Tab": 3, "Space": 13, "Backspace": 18, "Delete": 19, "Insert": 20, "End": 21, "Home": 22, "PageUp": 23, "PageDown": 24,
             "ShiftLeft": 4, "ShiftRight": 4, "ControlLeft": 7, "ControlRight": 7, "AltLeft": 10, "AltRight": 10,
@@ -1530,9 +1569,9 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // Strict Validation
-            if (file.name !== 'GtoMnK.ini') {
-                alert("The configuration file must be named exactly 'GtoMnK.ini'.");
+            // Validation
+            if (!file.name.toLowerCase().endsWith('.ini')) {
+                alert("The configuration file must be an INI file.");
                 event.target.value = ""; // Reset input so they can try again
                 return;
             }
@@ -1632,21 +1671,21 @@
                 if (data['KeyMapping'] && data['KeyMapping'][id] !== undefined) {
                     const val = data['KeyMapping'][id];
                     el.dataset.valBasic = val;
-                    el.dataset.txtBasic = val === "0" ? "None" : (val === "Fn1" || val === "Fn2" ? val : getLabel(val));
+                    el.dataset.txtBasic = parseDisplayString(val);
                 }
 
                 // Fn1 Layer
                 if (data['Fn1'] && data['Fn1'][id] !== undefined) {
                     const val = data['Fn1'][id];
                     el.dataset.valFn1 = val;
-                    el.dataset.txtFn1 = val === "0" ? "None" : getLabel(val);
+                    el.dataset.txtFn1 = parseDisplayString(val);
                 }
 
                 // Fn2 Layer
                 if (data['Fn2'] && data['Fn2'][id] !== undefined) {
                     const val = data['Fn2'][id];
                     el.dataset.valFn2 = val;
-                    el.dataset.txtFn2 = val === "0" ? "None" : getLabel(val);
+                    el.dataset.txtFn2 = parseDisplayString(val);
                 }
             });
 
